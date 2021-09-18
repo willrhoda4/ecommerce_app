@@ -28,48 +28,36 @@ const LocalStrategy    = require('passport-local').Strategy;
                          app.use(passport.initialize());
                          app.use(passport.session());
 
- 
-app.post('/login', 
-          passport.authenticate('local', { failureRedirect: '/fail',
-                                           successRedirect: '/success'}));
+
+
+const loginRouter = require('./routers/login.js');
+app.use('/login', loginRouter);
+
+const productRouter = require('./routers/product.js');
+app.use('/product', productRouter);
+
+const userRouter = require('./routers/user.js');
+app.use('/user', userRouter);
+
+const cartRouter = require('./routers/cart.js');
+app.use('/cart', cartRouter);
+
+const ordersRouter = require('./routers/orders.js');
+app.use('/orders', ordersRouter);
 
 
 
 
-
-
-
-app.post('/register', 
-           function (req, res, next) {
-
-            client.query(`SELECT * FROM customer WHERE username = '${req.body.username}'`, (err, result) => {
-
-              if (result.rowCount > 0 ) { return res.status(400).send('username already spoken for!') }
-              next();
-
-            });
-
-          },
-           async function (req, res, next) {
-           
-            let lastUser = await client.query(`SELECT * FROM customer ORDER BY id DESC LIMIT 1`);
-            let newId = lastUser.rows[0].id + 1;
-
-            client.query(`INSERT INTO customer (id, username, password)
-                                        VALUES (${newId}, '${req.body.username}', '${req.body.password}')`
-            );
-            res.status(200).send('oh yeah');
-            console.log('hmm...');
-
-          });
 
                                                                 app.get('/fail', (req, res) => { console.log('you failed!'); res.send('you failed!') });
 
                                                                 app.get('/success', isLoggedIn, (req, res) => { 
                                                                   console.log('you succeeded!'); 
+                                                                  console.log(req.user);
                                                                   console.log(req.user.username);
                                                                   console.log(req.isAuthenticated());
-                                                                  req.logout();
+                                                                  
+                                                                  console.log(req.user);
                                                                   console.log(req.isAuthenticated());
                                                                   console.log('oh snap!');
                                                                   res.send('you succeeded!') 
