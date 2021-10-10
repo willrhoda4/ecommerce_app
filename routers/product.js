@@ -56,7 +56,9 @@ if(req.isAuthenticated()) {
  
 
     productRouter.get('/:id', (req, res) => {
-        client.query(`SELECT * FROM product WHERE id = ${req.body.id}`, (err, result)=>{
+
+        
+        client.query(`SELECT * FROM product WHERE id = ${req.params.id}`, (err, result)=>{
             if(!err) {
                 if (result.rowCount === 0 )     {  res.status(404).send('product id not found.');  } 
                 else                            {  res.send(result.rows);  }
@@ -65,6 +67,16 @@ if(req.isAuthenticated()) {
         client.end;
     })
 
+
+    /*
+
+const queryParams = new URLSearchParams(window.location.search);
+const id = queryParams.get('id');
+const name = queryParams.get('name');
+const type = queryParams.get('type');
+
+
+    */
 
 
 

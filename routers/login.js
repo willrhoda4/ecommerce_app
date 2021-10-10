@@ -28,8 +28,48 @@ const LocalStrategy    = require('passport-local').Strategy;
 
 
 
-    loginRouter.post('/', passport.authenticate('local', { failureRedirect: '/fail',
-                                                            successRedirect: '/success'}));
+
+        function isLoggedIn(req, res, next) {
+        if(req.isAuthenticated()) {
+            return next();
+        } else {
+            return res.redirect('/login');
+        }
+    }
+
+
+    loginRouter.get('/', (req, res) => {
+        
+        console.log(req.session.passport.user)
+        if ( req.isAuthenticated() )  { res.status(200).send(req.user.username); }
+        else                          { res.status(403).send('STILL NOT LOGGED IN!!!');  }
+
+        client.end;
+    })
+
+
+
+
+
+
+
+    loginRouter.post('/', passport.authenticate('local', { failureRedirect: 'login//fail',
+                                                            successRedirect: 'login/success'}));
+
+                loginRouter.get('/fail', (req, res) => {
+                    console.log('bad');
+                })
+
+                loginRouter.get('/success', (req, res) => {
+                    console.log('good');
+                    console.log(req.sessions);
+                    console.log(req.user);
+                    console.log(req.isAuthenticated());
+                    setTimeout(() => {   console.log(req.user);
+                                         console.log(req.user.username);
+                                         console.log(req.isAuthenticated()); }, 3000);
+                    res.send('success!')
+                })
 
 
 
@@ -39,7 +79,7 @@ const LocalStrategy    = require('passport-local').Strategy;
 
         client.query(`SELECT * FROM customer WHERE username = '${req.body.username}'`, (err, result) => {
 
-        if (result.rowCount > 0 ) { return res.status(400).send('username already spoken for!') }
+        if (result.rowCount > 0 ) { return res.status(401).send('username already spoken for!') }
         next();
 
         });

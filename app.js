@@ -45,23 +45,12 @@ app.use('/cart', cartRouter);
 const ordersRouter = require('./routers/orders.js');
 app.use('/orders', ordersRouter);
 
-
-
-
-
-                                                                app.get('/fail', (req, res) => { console.log('you failed!'); res.send('you failed!') });
-
-                                                                app.get('/success', isLoggedIn, (req, res) => { 
-                                                                  console.log('you succeeded!'); 
-                                                                  console.log(req.user);
-                                                                  console.log(req.user.username);
-                                                                  console.log(req.isAuthenticated());
-                                                                  
-                                                                  console.log(req.user);
-                                                                  console.log(req.isAuthenticated());
-                                                                  console.log('oh snap!');
-                                                                  res.send('you succeeded!') 
-                                                                });
+app.use(
+  cors({
+    origin: "http://localhost:3000", // <-- location of the react app were connecting to
+    credentials: true,
+  })
+);
 
 passport.use(new LocalStrategy( (username, password, done) => {
 
@@ -84,9 +73,12 @@ passport.deserializeUser((username, done) => {
 }); 
 
 function isLoggedIn(req, res, next) {
+  console.log('small success');
+  console.log(req.isAuthenticated());
   if(req.isAuthenticated()) {
       return next();
   } else {
+      console.log('another small success');
       return res.redirect('/login');
   }
 }
