@@ -1,92 +1,64 @@
 
+//import                            './Login.css';
+import   React, { useState } from 'react';
+import   Axios               from 'axios';
 
 
+function Login({setUser}) {
 
-
-
-import axios from 'axios';
-import React, { useState } from 'react';
-import { useHistory } from "react-router-dom";
-
-
-
-
-
-const Login = () => {
-
-
+    const [loginUsername,  setLoginUsername]  = useState('');
+    const [loginPassword,  setLoginPassword]  = useState('');
     const [badCredentials, setBadCredentials] = useState(false);
- 
-    const message = () => {
- 
-     if (badCredentials === true) { return <p>Either your username or password was incorrect...</p> }
-       
+
+    const login = () => {
+        Axios({
+          method: "POST",
+          data: {
+            username: loginUsername,
+            password: loginPassword,
+          },
+          withCredentials: true,
+          url: "http://localhost:3000/login",
+        }).then((res) => {
+            console.log(res.status);
+            if (res.status === 203) { return setBadCredentials(true); }
+            setBadCredentials(false);
+            setUser(res.data);
+        });
+      };
+
+    const tryAgain = () => {
+
+       return badCredentials ? <p>Invalid username or password</p> : null;
     }
- 
-     const Field = React.forwardRef(({label, type}, ref) => {
-         return (
-           <div>
-             <label  >{label}</label>
-             <input ref={ref} type={type}  />
-           </div>
-         );
-     });
-     
-     const usernameRef = React.useRef();
-     const passwordRef = React.useRef();
-     const history     = useHistory();
- 
-     const handleSubmit = e => {
- 
-             e.preventDefault();
-  
-             axios.post('http://localhost:3000/login', {}, {
 
-                 auth: {
-                    username: usernameRef.current.value,
-                    password: passwordRef.current.value
-                 }
-               })
-               .then(function (response) {
-                 console.log(response);
-                 if ( response.status === 200) {
-                   setBadCredentials(false); 
-                   history.push('/profile') ;
-                 }
-                
-               })
-               .catch(function (error) {
-                 console.log(error);
-                 setBadCredentials(true);
-               });
-         };
-     
- 
- 
-   
- 
-     return (
- 
-         <div>
-         
-         <h1>Login</h1>
- 
-         {message()}
- 
-         <form onSubmit={handleSubmit} >
-             <Field ref={usernameRef} label="Username:" type="text" />
-             <Field ref={passwordRef} label="Password:" type="password" />
-             <div>
-             <button  type="submit">Submit</button>
-             </div>
-         </form>
- 
+    return (
+
+        <div className="Login">
+
+            <h2>Login</h2>
+
+            <p>This is the Login page.</p>
+
+            {tryAgain()}
+
+            <div>
+                <input
+                    placeholder="username"
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                />
+                <input
+                    placeholder="password"
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                <button onClick={login}>Submit</button>
+            </div>
+
          </div>
-     );
- };
-
-
-
-
+  );
+}
 
 export default Login;
+
+
+

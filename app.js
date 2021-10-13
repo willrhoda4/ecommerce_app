@@ -7,26 +7,50 @@
 const client           = require('./connection.js');
 
 const express          = require('express');
-const app              = express();
 const session          = require('express-session');
-                         app.use(session({
-                           secret: 'W$q4=25*8%v-}UV',
-                           resave: true,
-                           saveUninitialized: true
-                         }));
+                       
 
 const cors             = require('cors');
-                         app.use(cors());
 
 const bodyParser       = require("body-parser");
-                         app.use(bodyParser.json());
-                         app.use(express.json());
+const cookieParser     = require("cookie-parser");
+                       
 
 
 const passport         = require('passport');
 const LocalStrategy    = require('passport-local').Strategy;
-                         app.use(passport.initialize());
-                         app.use(passport.session());
+const bcrypt           = require('bcryptjs');                       
+
+
+
+const app  = express();
+
+app.use(cors({
+  origin: "http://localhost:3002", 
+  credentials: true
+}));
+
+
+app.use(session({
+                  secret: 'W$q4=25*8%v-}UV',
+                  resave: true,
+                  saveUninitialized: true
+}));
+
+
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser("secretcode"));
+
+
+app.use(express.json());
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
 
 
 
@@ -45,24 +69,36 @@ app.use('/cart', cartRouter);
 const ordersRouter = require('./routers/orders.js');
 app.use('/orders', ordersRouter);
 
-app.use(
-  cors({
-    origin: "http://localhost:3000", // <-- location of the react app were connecting to
-    credentials: true,
-  })
-);
 
-passport.use(new LocalStrategy( (username, password, done) => {
 
-    client.query(`SELECT username FROM customer WHERE username = '${username}'
-                                                  AND password = '${password}'`, (err, result) => {
-      if (err)                             { return done(err); }
-      if (result.rowCount !== 1)           { return done(null, false); }
-      if (result.rowCount === 1)           { return done(null, {username} ); }
-     
-    });
+
+
+
+
+
+
+                                              
+
+passport.use(new LocalStrategy(  async function (username, password, done) {
+
+
+  let user                = await client.query(`SELECT username, password FROM customer WHERE username = '${username}'`);
+  let hashedPassword      = user.rows[0].password; 
+  let match               = await bcrypt.compare(password, hashedPassword);
+
+
+  if (!match)                          { console.log('error!');              return done(null, false); }
+  if (user.rowCount !== 1)             { console.log('user not found!');     return done(null, false); }
+  if (match)                           { console.log('passwords match!');    return done(null, {username} ); }
 
 }));
+
+
+
+
+
+
+
 
 passport.serializeUser((user, done) => {
   done(null, user.username);
@@ -72,16 +108,7 @@ passport.deserializeUser((username, done) => {
   done(null, {username: username});
 }); 
 
-function isLoggedIn(req, res, next) {
-  console.log('small success');
-  console.log(req.isAuthenticated());
-  if(req.isAuthenticated()) {
-      return next();
-  } else {
-      console.log('another small success');
-      return res.redirect('/login');
-  }
-}
+ 
 
  
 const PORT = process.env.PORT || 3000;
@@ -90,4 +117,3 @@ app.listen(PORT, () => {
 });
 
 client.connect();
-

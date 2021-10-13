@@ -1,10 +1,27 @@
-const Home = () => {
-    return (
-        <div> 
-            <h1>Home</h1>
-            <p>*Picture a scenic shot of the homestead*</p>
-        </div>
-    )
+
+//import './Home.css';
+import   React from "react";
+
+
+
+function Home() {
+
+
+
+  return (
+
+      <div className="Home">
+
+        <h2>Home</h2>
+
+        <p>This is the home page.</p>
+
+      </div>
+    
+  );
 }
 
 export default Home;
+
+
+
