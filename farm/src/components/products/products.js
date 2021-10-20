@@ -16,7 +16,7 @@ import    Product     from './product/product';
 
 
 
-export default function Products() {
+export default function Products({cartCount, setCartCount}) {
 
     const [products, setProducts] = useState([]);
 
@@ -29,6 +29,9 @@ export default function Products() {
             })
     }, []);
     
+    const set6 = () => { setCartCount(6) }
+    const set9 = () => { setCartCount(9) }
+
 
     return  (
         <div>
@@ -37,6 +40,9 @@ export default function Products() {
                 <h1>Products List</h1>
 
                 <p>We got {products.length} options</p>
+                <button onClick={set9} >9</button>
+                <button onClick={set6} >6</button>
+
 
                 <div>
                 <ul>
@@ -53,10 +59,10 @@ export default function Products() {
             </div>
 
             <div>
-                
+
                 <Switch>
-                    <Route exact path='/products' render={() => <p>Choose an option for more details!</p> } />
-                    <Route path='/products/:id' component={Product}  />
+                    <Route exact path='/products'        render={() => <p>Choose an option for more details!</p> } />
+                    <Route       path='/products/:id'    render={() => <Product cartCount={cartCount} setCartCount={setCartCount} />} />
                 </Switch>
 
             </div>
@@ -64,3 +70,6 @@ export default function Products() {
     )
    
    }
+
+
+

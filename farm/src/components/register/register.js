@@ -1,7 +1,11 @@
 
 //import './Register.css';
-import React, { useState }   from 'react';
-import Axios                 from 'axios';
+import   React, 
+       { useState }      from 'react';
+import   Axios           from 'axios';
+import { useHistory }    from 'react-router-dom';
+
+
 
 
 
@@ -11,7 +15,10 @@ function Register({setUser}) {
     const [registerPassword, setRegisterPassword] = useState('');
     const [invalidUsername,  setInvalidUsername]  = useState(false);
 
+    let history = useHistory();
+
     const register = () => {
+
         Axios({
             method: "POST",
             data: {
@@ -27,7 +34,8 @@ function Register({setUser}) {
            // if (err)                             { throw(err)                  }
             if (res.status === 203)              { setInvalidUsername(true)    }
             else                                 { setInvalidUsername(false);
-                                                   setUser(res.data);          }
+                                                   setUser(res.data);  
+                                                   history.push('/products'); }
             
         })
     };

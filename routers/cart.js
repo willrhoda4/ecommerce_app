@@ -42,9 +42,13 @@ if(req.isAuthenticated()) {
 
 
 
-    cartRouter.get('/', isLoggedIn, (req, res) => {
-      
+    cartRouter.get('/',  (req, res) => {
+
+        console.log('getting the cart');
+        console.log(req.data);
+
         client.query(`SELECT customer.username AS "user",
+                             product.id AS "product_id",
                              product.name AS "product",
                              cart.quantity,
                              product.price AS "unit_price",
@@ -54,7 +58,7 @@ if(req.isAuthenticated()) {
                           ON customer.id = cart.customer_id
                         JOIN product
                           ON product.id = cart.product_id
-                       WHERE customer.username = '${req.user.username}'`, (err, result) => {
+                       WHERE customer.username = '${req.session.passport.user}'`, (err, result) => {
                             if(!err){
                                   
                                 let subtotals = [];
@@ -79,8 +83,7 @@ if(req.isAuthenticated()) {
 
     cartRouter.post('/', isLoggedIn, async function (req, res) {
 
-    
-
+        console.log('received');
         let lastProduct                = await client.query(`SELECT * FROM cart ORDER BY id DESC LIMIT 1`);
         let newId                      = lastProduct.rows[0].id + 1;
 
@@ -101,14 +104,14 @@ if(req.isAuthenticated()) {
                                                res.send('additional product successfully added!')
                                             };
 
-        if (existingProduct.rowCount === 0) {   client.query(`INSERT INTO cart            (id,
+        if (existingProduct.rowCount === 0) {   client.query(`INSERT INTO cart           ( id,
                                                                                            product_id,
                                                                                            customer_id,
-                                                                                           quantity)
-                                                                   VALUES                 (${newId}, 
+                                                                                           quantity )
+                                                                   VALUES                ( ${newId}, 
                                                                                            ${req.body.product_id}, 
                                                                                            ${custId}, 
-                                                                                           ${req.body.quantity})`)
+                                                                                           ${req.body.quantity} )`)
                                                 res.send('new product successfully added!')
                                             };    
         client.end
@@ -116,35 +119,46 @@ if(req.isAuthenticated()) {
 
 
 
-    cartRouter.delete('/', isLoggedIn, async function (req, res) {
+    cartRouter.put('/', isLoggedIn, async function (req, res) {
+        console.log('this far');
+        console.log(req.user.username);
 
+        try {
 
-        let currentCust                = await client.query(`SELECT * FROM customer WHERE username = '${req.user.username}'`);
-        let custId                     = currentCust.rows[0].id
+            let currentCust                = await client.query(`SELECT * FROM customer WHERE username = '${req.user.username}'`);
+            let custId                     = currentCust.rows[0].id
 
+            console.log('that far');
+            console.log(custId);
+            console.log(req);
 
-        let isInCart                   = await client.query(`SELECT * FROM cart WHERE customer_id = ${custId} AND product_id = ${req.body.product_id}`);
-        if (isInCart.rowCount === 0)   {  res.status(404).send('something went wrong! this item isn\'t in your cart!');  }
+            let isInCart                   = await client.query(`SELECT * FROM cart WHERE customer_id = ${custId} AND product_id = ${req.body.product_id}`);
+            if (isInCart.rowCount === 0)   {  res.status(404).send('something went wrong! this item isn\'t in your cart!');  }
 
+            console.log('more far');
+            console.log(req.body.quantity);
 
-        if (parseFloat(req.body.quantity) === 0)   {   client.query(`DELETE FROM cart 
-                                                                           WHERE customer_id   = ${custId} 
-                                                                             AND product_id    = ${req.body.product_id}`)  
-                                        
-                                                               
-                                                       res.send('item successfully removed from cart')
-                                                    }
+            if (parseFloat(req.body.quantity) === 0)   {   client.query(`DELETE FROM cart 
+                                                                               WHERE customer_id   = ${custId} 
+                                                                                 AND product_id    = ${req.body.product_id}`)  
+                                            
+                                                                      
+                                                             res.redirect(303, '/cart')
+                                                       }
 
-        if (parseFloat(req.body.quantity) > 0)     {   client.query(`UPDATE cart 
-                                                                        SET quantity      = ${req.body.quantity}
-                                                                      WHERE customer_id   = ${custId} 
-                                                                        AND product_id    = ${req.body.product_id}`)  
-                  
-                                                              
-                                                       res.send('amount successfully adjusted')
-                                                    }
+            if (parseFloat(req.body.quantity) > 0)     {   client.query(`UPDATE cart 
+                                                                            SET quantity      = ${req.body.quantity}
+                                                                          WHERE customer_id   = ${custId} 
+                                                                            AND product_id    = ${req.body.product_id}`)  
+                    
+                                                                
+                                                            res.redirect(303, '/cart')
 
-        client.end;
+                                                        }
+
+            client.end;
+
+        } catch (error)                        { console.log('caught'); } 
     });
 
 
@@ -165,7 +179,7 @@ if(req.isAuthenticated()) {
 
             
 
-            let isInCart                   = await client.query(`SELECT * FROM cart WHERE customer_id = ${custId} AND product_id = ${req.body.product_id}`);
+            let isInCart                   = await client.query(`SELECT * FROM cart WHERE customer_id = ${custId}`);
             if (isInCart.rowCount === 0)   {  return res.status(404).send('You need to put some items in your cart before you can checkout!'); }
 
             next();
@@ -195,14 +209,14 @@ if(req.isAuthenticated()) {
                 subtotals.push(parseFloat(items.rows[i].subtotal));
             }
 
-            let balance       =  99;
+            let balance       =  9;
             let total         =  parseFloat(subtotals.reduce((a, b) => a + b, 0));
             res.locals.total  =  total;
 
             console.log(`your total is ${total}`);
             
 
-            if (total > balance)  {  return res.status(404).send('You\'re a little short on money at the moment...'); }
+            if (total > balance)  {  return res.status(402).send('You\'re a little short on money at the moment...'); }
 
             next();
         },
@@ -214,7 +228,7 @@ if(req.isAuthenticated()) {
             console.log(res.locals.custId);
 
             
-            let lastId          = await client.query(`SELECT * FROM orders ORDER BY id DESC LIMIT 1`);
+            let lastId          = await client.query(`SELECT id FROM orders ORDER BY id DESC LIMIT 1`);
             let newId           = lastId.rows[0].id + 1;
             res.locals.orderId  =  newId;
            
@@ -267,7 +281,7 @@ if(req.isAuthenticated()) {
 
             client.query(`DELETE FROM cart WHERE customer_id = ${res.locals.custId}`);
             
-            return res.send('Order successfully placed!');
+            return res.status(200).send('Order successfully placed!');
             
 
             client.end;

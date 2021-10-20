@@ -64,6 +64,7 @@ const LocalStrategy    = require('passport-local').Strategy;
         console.log('step 1');
 
         passport.authenticate("local", (err, user) => {
+            console.log('step2');
           if (err) throw err;
           if (!user) res.status(203).send("incorrect username or password");
           else {

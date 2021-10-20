@@ -50,8 +50,11 @@ if(req.isAuthenticated()) {
 
 
 
-    userRouter.get('/:id', (req, res) => {
-        client.query(`SELECT * FROM customer WHERE username = '${req.body.username}'`, (err, result)=>{
+    userRouter.get('/:username', (req, res) => {
+        console.log('operator');
+        console.log(req.session.passport.user);
+        console.log();
+        client.query(`SELECT * FROM customer WHERE username = '${req.session.passport.user}'`, (err, result)=>{
             if(!err) {
                 if (result.rowCount === 0 )     {  res.status(404).send('user not found.');  } 
                 else                            {  res.send(result.rows);  }
